@@ -92,7 +92,7 @@ const App = () => {
     <View style={styles.container}>
 
       <View style={styles.taskWrapper}>
-        <RefreshControl onRefresh={refresh}>
+        <RefreshControl refreshing={refreshing} onRefresh={refresh}>
           <Text style={styles.sectionTitle}>Today's tasks</Text>
         </RefreshControl>
 
