@@ -3,7 +3,7 @@ import React from 'react'
 
 const Task = (props) => {
   return (
-    <View style={styles.items}>
+    <View style={[styles.items,{borderColor: props.colorId === 0 ? 'red' : 'green'}]}>
         <View style={styles.itemsLeft}>
             <TouchableOpacity style={styles.square}>
                 
@@ -25,6 +25,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         padding: 15,
         borderRadius: 10,
+        borderWidth: 1,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
