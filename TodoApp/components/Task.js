@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import React from 'react'
-
+import { StyledButton } from '../src/theme/common/button'
+import { TextCom } from './TextCom'
 const Task = (props) => {
   return (
     <View style={[styles.items,{borderColor: props.colorId === 0 ? 'red' : 'green'}]}>
@@ -13,6 +14,8 @@ const Task = (props) => {
             <Text style={[styles.itemText,{textDecorationLine: props.toDoData.complete ? 'line-through' : 'none', textDecorationStyle: 'solid'}]}>{props.toDoData.title}</Text>
         </View>
         <View style={styles.circular}></View>
+        {/* <StyledButton {...props}/>
+        <TextCom size='lg'/> */}
     </View>
   )
 }
