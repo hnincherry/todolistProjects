@@ -1,22 +1,27 @@
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity, Keyboard, FlatList, ScrollView, RefreshControl } from 'react-native'
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity, Keyboard, ScrollView, RefreshControl, Modal, Pressable } from 'react-native'
 import React, { useEffect, useState, useCallback } from 'react'
-import Task from './components/Task'
-// import { useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useNetInfo } from '@react-native-community/netinfo'
-import LinearGradient from 'react-native-linear-gradient'
-
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { ThemeProvider } from 'styled-components'
+
 import * as theme from './src/theme'
-import { ButtonCom } from './components/ButtonCom'
-import TextInputCom from './components/TextInputCom'
+import { StyledButton } from './src/theme'
+import CustomTextInputCom from './components/CustomTextInputCom'
+import Task from './components/Task'
 
 const App = () => {
-  
+
   const [data, setData] = React.useState([]);
+  const [text, setText] = useState('')
   const [refreshing, setRefreshing] = useState(false)
   const netInfo = useNetInfo();
+  const [addModalVisible, setAddModalVisible] = useState(false)
+  const [editModalVisible, setEditModalVisible] = useState(false)
+  const [editText, setEditText] = useState('')
+  const [currentSelectedIndex, setCurrentSelectedIndex] = useState(-1)
 
+  // update UI 
   const getResponse = async () => {
     const response = await AsyncStorage.getItem('todo');
     const result = JSON.parse(response)
@@ -24,9 +29,9 @@ const App = () => {
     setData(result ? result : []);
   };
 
-  // useEffect(() => { 
-  //   getResponse();
-  // },[]);
+  useEffect(() => {
+    getResponse();
+  }, []);
 
 
   //Check Internet Connection
@@ -41,39 +46,79 @@ const App = () => {
 
   const refresh = useCallback(() => {
     setRefreshing(true)
-    // dispatch(AuthAction.getProfile())
     getResponse();
     setRefreshing(false)
 
   }, [refreshing])
 
+  // Add new item in list && store in local && update UI
+  const handleChange = _ => {
 
-  
+    if (text.length > 0) {
+      Keyboard.dismiss();
+      const toDoData = { "title": text, "complete": false };
 
-  
+      const toDOList = [...data, toDoData]; // add new data to ToDoList
+
+      AsyncStorage.setItem('todo', JSON.stringify(toDOList));
+      console.log('toDOList ', toDOList)
+
+      getResponse();
+      setText('')
+      setAddModalVisible(false)
+    } else {
+      alert("Enter Task")
+    }
+
+  }
+
+  // delete item that's realated to its index && store in local again
+  const deleteTask = index => {
+    index > -1 &&
+      data.splice(index, 1)
+    AsyncStorage.setItem('todo', JSON.stringify(data))
+    console.log('Data ', data)
+    getResponse()
+  }
+
+  // the check index is set to complete
   const completeTask = index => {
     let itemsCopy = [...data];
-    // itemsCopy.splice(index, 1);
+
     itemsCopy[index].complete = !itemsCopy[index].complete
-    // alert(JSON.stringify(itemsCopy[index]))
-    // alert(itemsCopy)
 
     setData(itemsCopy)
 
   }
 
-  // console.log(data.length,"uuu")
+  // 3. View list item to edit textbox
+  const handleEdit = (item, index) => {
+    setCurrentSelectedIndex(index)
+    setEditModalVisible(true)
+    setEditText(item.title)
+  }
+
+  // 4. Change EditText to array data
+  const handleEditChange = () => {
+    if (currentSelectedIndex > -1) {
+      data[currentSelectedIndex].title = editText
+      AsyncStorage.setItem('todo', JSON.stringify(data))
+    }
+    getResponse()
+    setEditModalVisible(false)
+  }
+
   let Final_theme = { ...theme }
   return (
     <ThemeProvider theme={Final_theme}>
       <View style={styles.container}>
 
-        <View style={styles.taskWrapper}>
+        <View>
           <RefreshControl onRefresh={refresh}>
             <Text style={styles.sectionTitle}>Today's tasks</Text>
           </RefreshControl>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.taskWrapper}>
             <View style={styles.items}>
 
               {
@@ -81,7 +126,15 @@ const App = () => {
                 data.map((item, index) => {
                   return (
                     <TouchableOpacity key={index} onPress={_ => completeTask(index)}>
-                      <Task toDoData={item} colorId={index % 2} size='lg'/>
+                      <Task
+                        toDoData={item}
+                        size='lg'
+                        editText={item.title}
+                        index={index}
+                        handleCheck={_ => completeTask(index)}
+                        onDelete={_ => deleteTask(index)}
+                        handleEdit={_ => handleEdit(item, index)}
+                      />
                     </TouchableOpacity>
                   )
                 })
@@ -93,21 +146,99 @@ const App = () => {
         </View>
 
         <KeyboardAvoidingView style={styles.writeTaskWrapper} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          
-          <TextInputCom/>
-          
-          
+
+          <View style={styles.centeredView}>
+
+            {/* Add Modal */}
+            <Modal
+              animationType="fade"
+              transparent={true}
+              visible={addModalVisible}
+            >
+              <View style={styles.centeredView}>
+                <View style={styles.modalView}>
+                  <View style={{ flexDirection: 'row' }}>
+                    <Text style={styles.modalText}>New Task</Text>
+                    <TouchableOpacity onPress={_ => setAddModalVisible(false)}>
+                      <MaterialIcons
+                        name='close'
+                        size={25}
+                        color='#000000'
+                      />
+                    </TouchableOpacity>
+
+                  </View>
+
+                  <CustomTextInputCom
+                    fontSize={15}
+                    bgColor='light'
+                    fontWeight='bold'
+                    btnColor='light'
+                    onTextChange={text => setText(text)}
+                    value={text}
+                  />
+
+                  <Pressable
+                    style={[styles.button, styles.buttonClose]}
+                    onPress={() => handleChange()}
+                  >
+                    <Text style={styles.textStyle}>OK</Text>
+                  </Pressable>
 
 
+                </View>
+              </View>
+            </Modal>
+
+            {/* Edit Modal */}
+            <Modal
+              animationType="fade"
+              transparent={true}
+              visible={editModalVisible}
+            >
+              <View style={styles.centeredView}>
+                <View style={styles.modalView}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Text style={styles.modalText}>Edit</Text>
+                    <TouchableOpacity onPress={_ => setEditModalVisible(false)}>
+                      <MaterialIcons
+                        name='close'
+                        size={25}
+                        color='#000000'
+                      />
+                    </TouchableOpacity>
+                  </View>
+
+                  <CustomTextInputCom
+                    fontSize={15}
+                    bgColor='light'
+                    fontWeight='bold'
+                    btnColor='light'
+                    onTextChange={text => setEditText(text)}
+                    value={editText}
+                  />
+
+                  <Pressable
+                    style={[styles.button, styles.buttonClose]}
+                    onPress={() => handleEditChange()}
+                  >
+                    <Text style={styles.textStyle}>OK</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </Modal>
+          </View>
+          <TouchableOpacity onPress={() => setAddModalVisible(true)}>
+            <StyledButton btnColor='#ffffff'>
+              <MaterialIcons
+                name='add'
+                size={25}
+                color='#0000ff'
+              />
+            </StyledButton>
+          </TouchableOpacity>
         </KeyboardAvoidingView>
-        <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={['#4c669f', '#3b5998', '#192f6a']} style={styles.linearGradient}>
-          <Text style={styles.buttonText}>
-            Sign in with Facebook
-          </Text>
-        </LinearGradient>
-        <ButtonCom btnColor='warning'>
-          <Text>This is testing Props & Styled</Text>
-        </ButtonCom>
+        
       </View>
     </ThemeProvider>
   )
@@ -122,52 +253,69 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 24,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    color: '#000000',
+    paddingTop: 20,
+    paddingLeft: 16,
   },
   taskWrapper: {
-    paddingTop: 50,
-    paddingHorizontal: 20
+    paddingHorizontal: 16
   },
   items: {
-    marginTop: 30
+    marginTop: 10
   },
 
   writeTaskWrapper: {
     position: 'absolute',
-    bottom: 60,
+    bottom: 5,
     width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around'
+    padding: 10,
+    alignItems: 'flex-end',
+
   },
-  // input: {
-    
-  // },
-  addWrapper: {
-    width: 60,
-    height: 60,
-    borderRadius: 60,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center'
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+    backgroundColor: 'rgba(30, 30, 30, 0.2)'
   },
-  addText: {},
-  linearGradient: {
-    // flex: 1,
-    paddingLeft: 15,
-    paddingRight: 15,
-    borderRadius: 5,
-    marginLeft: 20,
-    height: 50,
-    width: 300,
+  modalView: {
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5
   },
-  buttonText: {
-    fontSize: 18,
-    fontFamily: 'Gill Sans',
-    textAlign: 'center',
+  button: {
+    borderRadius: 10,
+    padding: 10,
     margin: 10,
-    color: '#ffffff',
-    backgroundColor: 'transparent',
+    width: 80,
+    elevation: 1,
+    marginLeft: 165,
   },
+  buttonClose: {
+    backgroundColor: "#0000ff",
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center"
+  },
+  modalText: {
+    fontSize: 24,
+    marginBottom: 20,
+    fontWeight: 'bold',
+    color: '#000000',
+    paddingRight: 130,
+  }
 
 })
+

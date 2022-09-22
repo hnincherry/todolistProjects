@@ -1,60 +1,134 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
-import React from 'react'
-import { StyledButton } from '../src/theme/common/button'
-import { TextCom } from './TextCom'
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native'
+import React, { useRef, useState } from 'react'
+import Feather from 'react-native-vector-icons/Feather';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import RBSheet from 'react-native-raw-bottom-sheet';
+
 const Task = (props) => {
-  return (
-    <View style={[styles.items,{borderColor: props.colorId === 0 ? 'red' : 'green'}]}>
-        <View style={styles.itemsLeft}>
-            <TouchableOpacity style={styles.square}>
-                
+    const refRBSheet = useRef()
+   
+    return (
+        <View style={[styles.items]}>
+
+            <View style={styles.itemsLeft}>
+                <TouchableOpacity onPress={props.handleCheck}>
+                    <Feather
+                        name={props.toDoData.complete ? 'check-circle' : 'circle'}
+                        color='#0000ff'
+                        size={25}
+                    />
+                </TouchableOpacity>
+
+                <Text style={[styles.itemText, { textDecorationLine: props.toDoData.complete ? 'line-through' : 'none', textDecorationStyle: 'solid' }]}>{props.toDoData.title}</Text>
+
+            </View>
+
+            {/* 1. open bottom sheeet */}
+            <TouchableOpacity onPress={() => refRBSheet.current.open()}>
+                <Feather
+                    name='more-vertical'
+                    color='grey'
+                    size={25}
+                />
             </TouchableOpacity>
-            {/* <Text style={[styles.itemText,{textDecorationLine: props.text.complete ? 'line-through' : 'none', textDecorationStyle: 'solid'}]}>{props.text.title}</Text> */}
-            {/* <Text style={styles.itemText}>{props.text}</Text> */}
-            <Text style={[styles.itemText,{textDecorationLine: props.toDoData.complete ? 'line-through' : 'none', textDecorationStyle: 'solid'}]}>{props.toDoData.title}</Text>
+            <RBSheet
+                ref={refRBSheet}
+                closeOnDragDown={false}
+                closeOnPressMask={true}
+                customStyles={{
+                    wrapper: {
+                        backgroundColor: 'rgba(30, 30, 30, 0.2)'
+                    },
+                    container: {
+                        height: 150,
+                        borderTopLeftRadius: 20,
+                        borderTopRightRadius: 20,
+                        elevation: 10
+                    }
+                }}
+            >
+                <View style={styles.bottomSheetContainer}>
+                    <Text style={styles.sectionTitle}>Action</Text>
+                    <TouchableOpacity onPress={_ => refRBSheet.current.close()}>
+                        <MaterialIcons
+                            name='close'
+                            size={25}
+                            color='#000000'
+                        />
+                    </TouchableOpacity>
+                </View>
+
+                <View style={{ padding: 15 }}>
+                    {/* 2. Open Edit Modal From handleEdit*/}
+                    <TouchableOpacity onPress={() => {
+                        refRBSheet.current.close()
+                        props.handleEdit()
+                    }}>
+                        <View style={{ flexDirection: 'row', marginBottom: 15 }}>
+                            <Feather
+                                name='edit'
+                                size={30}
+                                color='#000'
+                            />
+                            <Text style={styles.itemText}>Edit</Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={() => {
+                        refRBSheet.current.close()
+                        props.onDelete()
+                    }}>
+                        <View style={{ flexDirection: 'row' }}>
+                            <Feather
+                                name='trash-2'
+                                size={30}
+                                color='#000'
+                            />
+                            <Text style={styles.itemText}>Delete</Text>
+                        </View>
+                    </TouchableOpacity>
+
+                </View>
+
+
+            </RBSheet>
+
         </View>
-        <View style={styles.circular}></View>
-        {/* <StyledButton {...props}/>
-        <TextCom size='lg'/> */}
-    </View>
-  )
+    )
 }
 
 export default Task
 
 const styles = StyleSheet.create({
     items: {
-        marginBottom: 20,
+        marginBottom: 10,
         backgroundColor: '#fff',
-        padding: 15,
+        paddingTop: 15,
+        paddingRight: 5,
+        paddingBottom: 15,
+        paddingLeft: 15,
         borderRadius: 10,
-        borderWidth: 1,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        
+
     },
     itemsLeft: {
         flexDirection: 'row',
-        alignItems: 'center'
-    },
-    square: {
-        backgroundColor: '#558cf6',
-        width: 24,
-        height: 24,
-        opacity: 0.4,
-        borderRadius: 5,
-        marginRight: 15
+        alignItems: 'center',
     },
     itemText: {
         maxWidth: '80%',
-        
+        fontSize: 16,
+        paddingLeft: 8,
+        color: '#000000',
+        textAlign: 'center'
     },
-    circular: {
-        width: 12,
-        height: 12,
-        borderColor: '#558cf6',
-        borderRadius: 5,
-        borderWidth: 2
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#000000',
+        paddingLeft: 16,
     },
+    bottomSheetContainer: { flex: 1, flexDirection: 'row', justifyContent: 'space-between', paddingTop: 10, paddingRight: 10 }
 })

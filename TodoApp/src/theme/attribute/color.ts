@@ -18,6 +18,7 @@ export const color = {
   mode: 'light',
   typo: {
     primary: '#F7A928',
+    // yellow: '#F7A928',
     secondary: '#021C19',
     success: '#F7A928',
     warning: '#FFDA44',
@@ -432,4 +433,9 @@ export const lightcolor = {
     gray: '#707070',
     gray_light: '#CCC',
   }
+}
+
+// export {ColorSchema,color,darkcolor,lightcolor}
+export default CustomColor => {
+  
 }

@@ -14,3 +14,11 @@ export const modalVariable = {
 export const buttonVariable = {
   borderRadius: 10
 }
+
+export const padding = {
+  xxl: 22,
+  xl: 20,
+  lg: 18,
+  md: 16,
+  sm: 14,
+} 
